@@ -1,8 +1,7 @@
 import json
-import math
 import os
-import sys
 import subprocess
+import sys
 
 import requests
 
@@ -16,7 +15,6 @@ load_dotenv()
 skip_weeks_from_front = 2
 skip_days_from_above = 1
 commit_per_day_for_highlighted = 20
-commit_per_day_for_shadow = 0
 
 OWNER = "iamvinitk"
 REPO_NAME = "text-on-github"
@@ -27,11 +25,11 @@ DELETE_ENDPOINT = "https://api.github.com/repos/{owner}/{repo}"
 
 
 def get_text_input():
-    return "HIRE ME!"
-    # if len(sys.argv) > 1:
-    #     return sys.argv[1]
-    # else:
-    #     return input("Enter the text string: ")
+    # return "HIRE ME!"
+    if len(sys.argv) > 1:
+        return sys.argv[1]
+    else:
+        return input("Enter the text string: ")
 
 
 def construct_printing_matrix(text_input):
@@ -79,7 +77,9 @@ def do_the_commits(commit_dates, commit_per_day=1):
         for i in range(commit_per_day):
             formatted_date = commit_date.strftime("%a %b %d %H:%M %Y %z")
             formatted_date_with_timezone = formatted_date + " +0000"
-            cmd = f'GIT_COMMITTER_DATE="{formatted_date_with_timezone}" GIT_AUTHOR_DATE="{formatted_date_with_timezone}" git commit --allow-empty -m "committing on {formatted_date_with_timezone}"'
+            cmd = (
+                f'GIT_COMMITTER_DATE="{formatted_date_with_timezone}" GIT_AUTHOR_DATE="{formatted_date_with_timezone}"'
+                f' git commit --allow-empty -m "committing on {formatted_date_with_timezone}"')
             run_git_command(cmd)
             count += 1
 
@@ -216,7 +216,7 @@ def find_highest_contributed_day(response):
 
 
 def main():
-    global commit_per_day_for_highlighted, commit_per_day_for_shadow
+    global commit_per_day_for_highlighted
 
     create_git_repo()
     create_remote_repo(delete_existing=True)
@@ -224,19 +224,12 @@ def main():
 
     response = get_commits()
     highest_contributed_day = find_highest_contributed_day(response)
-    print(highest_contributed_day)
+
     commit_per_day_for_highlighted = highest_contributed_day[1] * 3
-    commit_per_day_for_shadow = math.floor(highest_contributed_day[1] * 1.5)
 
     printing_matrix = construct_printing_matrix(get_text_input().lower())
-    print(printing_matrix)
     commit_dates_dark = get_commit_dates(printing_matrix, sunday_at_start + timedelta(weeks=skip_weeks_from_front))
-    print(len(commit_dates_dark))
     do_the_commits(commit_dates_dark, commit_per_day_for_highlighted)
-
-    # commit_dates_shadow = get_commit_dates(printing_matrix,
-    #                                        sunday_at_start + timedelta(weeks=skip_weeks_from_front - 1))
-    # do_the_commits(commit_dates_shadow, commit_per_day_for_shadow)
 
 
 if __name__ == '__main__':
